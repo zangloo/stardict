@@ -4,5 +4,5 @@ mod idx;
 mod ifo;
 mod dict;
 
-pub type Stardict = stardict::StarDict;
-pub type LookupResult<'a> = stardict::LookupResult<'a>;
+pub use crate::stardict::StarDict;
+pub use crate::stardict::LookupResult;
