@@ -1,0 +1,18 @@
+[package]
+name = "stardict"
+version = "0.1.0"
+edition = "2021"
+description = "Rust implement stardict"
+authors = ["zang.loo"]
+homepage = "https://github.com/zangloo/stardict"
+repository = "https://github.com/zangloo/stardict.git"
+keywords = ["stardict"]
+license = "GPL-2.0-only"
+readme = "README.md"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+thiserror = "1.0"
+flate2 = "1.0"
+eio = "0.1"
