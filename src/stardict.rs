@@ -14,7 +14,7 @@ pub struct StarDict {
 
 pub struct LookupResult<'a> {
 	pub word: &'a str,
-	pub trans: Cow<'a, str>,
+	pub definition: Cow<'a, str>,
 }
 
 impl StarDict {
@@ -73,8 +73,8 @@ impl StarDict {
 
 	pub fn lookup<'a>(&'a mut self, word: &'a str) -> Option<LookupResult<'a>> {
 		let entry = self.idx.lookup(word)?;
-		let trans = self.dict.get_definition(entry)?;
-		Some(LookupResult { word: &entry.word, trans })
+		let definition = self.dict.get_definition(entry)?;
+		Some(LookupResult { word: &entry.word, definition })
 	}
 
 	pub fn dict_name(&self) -> &str {
