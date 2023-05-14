@@ -23,8 +23,18 @@ pub enum Error {
 	#[error("Invalid syn index for {0}")]
 	InvalidSynIndex(String),
 
+	#[error("Invalid dict content")]
+	InvalidDictContent,
+
 	#[error("Invalid dict file")]
 	InvalidDict,
+
+	#[error("Invalid dict field: {0}")]
+	FailedParseDictHeader(&'static str),
+
+	#[error("Error when reading: {0}")]
+	FailedReadHeader(#[from] std::io::Error),
+
 }
 
 pub type Result<T> = std::result::Result<T, Error>;

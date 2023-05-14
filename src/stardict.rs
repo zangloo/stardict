@@ -1,3 +1,4 @@
+use std::borrow::Cow;
 use crate::error::{Error, Result};
 use crate::idx::Idx;
 use crate::ifo::Ifo;
@@ -13,7 +14,7 @@ pub struct StarDict {
 
 pub struct LookupResult<'a> {
 	pub word: &'a str,
-	pub trans: &'a str,
+	pub trans: Cow<'a, str>,
 }
 
 impl StarDict {
@@ -70,9 +71,9 @@ impl StarDict {
 		}
 	}
 
-	pub fn lookup<'a>(&'a self, word: &'a str) -> Option<LookupResult<'a>> {
+	pub fn lookup<'a>(&'a mut self, word: &'a str) -> Option<LookupResult<'a>> {
 		let entry = self.idx.lookup(word)?;
-		let trans = self.dict.get_trans(entry)?;
+		let trans = self.dict.get_definition(entry)?;
 		Some(LookupResult { word: &entry.word, trans })
 	}
 

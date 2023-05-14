@@ -8,6 +8,7 @@ use std::path::PathBuf;
 use flate2::read::GzDecoder;
 use std::collections::HashMap;
 use byteorder::{BigEndian, ReadBytesExt};
+use crate::buf_to_string;
 
 #[derive(Debug)]
 pub struct IdxEntry {
@@ -123,12 +124,4 @@ fn load_syn(vec: &Vec<IdxEntry>, items: &mut HashMap<String, IdxEntry>, syn: Pat
 		}
 	}
 	Ok(())
-}
-
-#[inline]
-fn buf_to_string(buf: &Vec<u8>) -> String {
-	String::from_utf8_lossy(&buf)
-		.chars()
-		.filter(|&c| c != '\u{fffd}')
-		.collect()
 }
