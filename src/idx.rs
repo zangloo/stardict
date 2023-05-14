@@ -5,9 +5,9 @@ use std::fmt::Debug;
 use std::fs::File;
 use std::io::{BufRead, BufReader, Read};
 use std::path::PathBuf;
-use eio::FromBytes;
 use flate2::read::GzDecoder;
 use std::collections::HashMap;
+use byteorder::{BigEndian, ReadBytesExt};
 
 #[derive(Debug)]
 pub struct IdxEntry {
@@ -46,11 +46,11 @@ impl Idx {
 #[inline]
 fn read(version: &Version, idxoffsetbits: usize, reader: impl BufRead, syn: Option<PathBuf>) -> Result<Idx> {
 	let vec = match version {
-		Version::V242 => read_items::<4, u32>(reader)?,
+		Version::V242 => read_items(reader, |r| Ok(r.read_u32::<BigEndian>()? as usize))?,
 		Version::V300 => if idxoffsetbits == 64 {
-			read_items::<8, u64>(reader)?
+			read_items(reader, |r| Ok(r.read_u64::<BigEndian>()? as usize))?
 		} else {
-			read_items::<4, u32>(reader)?
+			read_items(reader, |r| Ok(r.read_u32::<BigEndian>()? as usize))?
 		}
 	};
 	let mut items = HashMap::new();
@@ -63,10 +63,8 @@ fn read(version: &Version, idxoffsetbits: usize, reader: impl BufRead, syn: Opti
 	Ok(Idx { items })
 }
 
-fn read_items<'a, const N: usize, T>(mut reader: impl BufRead) -> Result<Vec<IdxEntry>>
-	where
-		T: FromBytes<N> + TryInto<usize>,
-		<T as TryInto<usize>>::Error: Debug,
+fn read_items<F>(mut reader: impl BufRead, f: F) -> Result<Vec<IdxEntry>>
+	where F: Fn(&mut dyn BufRead) -> std::io::Result<usize>
 {
 	let mut items = vec![];
 	let mut buf: Vec<u8> = Vec::new();
@@ -83,14 +81,8 @@ fn read_items<'a, const N: usize, T>(mut reader: impl BufRead) -> Result<Vec<Idx
 		}
 
 		let word = buf_to_string(&buf);
-
-		let mut b = [0; N];
-		reader.read(&mut b).map_err(|_| Error::InvalidIdxElement("offset"))?;
-		let offset = T::from_be_bytes(b).try_into().unwrap();
-
-		let mut b = [0; N];
-		reader.read(&mut b).map_err(|_| Error::InvalidIdxElement("size"))?;
-		let size = T::from_be_bytes(b).try_into().unwrap();
+		let offset: usize = f(&mut reader).map_err(|_| Error::InvalidIdxElement("offset"))?;
+		let size: usize = f(&mut reader).map_err(|_| Error::InvalidIdxElement("size"))?;
 
 		if !word.is_empty() {
 			items.push(IdxEntry { word, offset, size })

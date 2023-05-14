@@ -15,4 +15,4 @@ readme = "README.md"
 [dependencies]
 thiserror = "1.0"
 flate2 = "1.0"
-eio = "0.1"
+byteorder = "1.4"
