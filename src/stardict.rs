@@ -1,4 +1,3 @@
-use std::borrow::Cow;
 use crate::error::{Error, Result};
 use crate::idx::Idx;
 use crate::ifo::Ifo;
@@ -12,9 +11,10 @@ pub struct StarDict {
 	dict: Dict,
 }
 
-pub struct LookupResult<'a> {
-	pub word: &'a str,
-	pub definition: Cow<'a, str>,
+pub struct WordDefinition {
+	pub word: String,
+	pub types: String,
+	pub text: String,
 }
 
 impl StarDict {
@@ -71,17 +71,18 @@ impl StarDict {
 		}
 	}
 
-	pub fn lookup<'a>(&'a mut self, word: &'a str) -> Option<LookupResult<'a>> {
-		let entry = self.idx.lookup(word)?;
-		let definition = self.dict.get_definition(entry)?;
-		Some(LookupResult { word: &entry.word, definition })
+	pub fn lookup(&mut self, word: &str) -> Option<Vec<WordDefinition>> {
+		let blocks = self.idx.lookup_blocks(word)?;
+		let mut definitions = vec![];
+		for block in blocks {
+			if let Some(mut result) = self.dict.get_definitions(block, &self.ifo) {
+				definitions.append(&mut result);
+			}
+		}
+		Some(definitions)
 	}
 
 	pub fn dict_name(&self) -> &str {
 		&self.ifo.bookname
-	}
-
-	pub fn wordcount(&self) -> usize {
-		self.ifo.wordcount
 	}
 }

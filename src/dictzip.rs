@@ -1,10 +1,8 @@
-use std::borrow::Cow;
 use std::collections::HashMap;
 use std::fs::File;
 use inflate::inflate_bytes;
 use std::io::{BufRead, BufReader, Read, Seek, SeekFrom};
 use byteorder::{LE, ReadBytesExt};
-use crate::buf_to_string;
 use crate::error::{Error, Result};
 
 struct DictZipHeader {
@@ -96,7 +94,9 @@ impl DictZip {
 		Ok(dict)
 	}
 
-	pub fn get_text(&mut self, offset: usize, size: usize) -> Option<Cow<str>>
+	/// return combined chunks contains from offset to offset + size
+	/// and the offset for the segment in this data
+	pub fn get_segment_data(&mut self, offset: usize, size: usize) -> Option<(Vec<u8>, usize)>
 	{
 		let chunk_count = self.chunks.len();
 		let first_chunk = offset / self.chunk_length;
@@ -114,16 +114,14 @@ impl DictZip {
 			let chunk = self.read_chunk(i)?;
 			buf = [buf.as_slice(), chunk.as_slice()].concat();
 		}
-		let segment = &buf[chunk_offset..chunk_offset + size];
-		let text = buf_to_string(segment);
-		Some(Cow::Owned(text))
+		Some((buf, chunk_offset))
 	}
 
 	fn read_chunk(&mut self, chunk_index: usize) -> Option<&Vec<u8>> {
 		if !self.cache.contains_key(&chunk_index) {
 			let mut offset = self.data_offset;
 			for i in 0..chunk_index {
-				offset += *self.chunks.get(i).unwrap() as u64;
+				offset += *self.chunks.get(i)? as u64;
 			}
 			self.reader.seek(SeekFrom::Start(offset)).ok()?;
 			let length = *self.chunks.get(chunk_index)? as usize;

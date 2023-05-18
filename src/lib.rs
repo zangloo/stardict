@@ -6,7 +6,7 @@ mod dict;
 mod dictzip;
 
 pub use crate::stardict::StarDict;
-pub use crate::stardict::LookupResult;
+pub use crate::stardict::WordDefinition;
 
 #[inline]
 fn buf_to_string(buf: &[u8]) -> String {
