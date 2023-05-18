@@ -3,7 +3,7 @@ use std::io::{BufReader, Read, Seek, SeekFrom};
 use crate::error::{Error, Result};
 
 use std::path::PathBuf;
-use crate::buf_to_string;
+use crate::{buf_to_string, WordDefinitionSegment};
 use crate::dictzip::DictZip;
 use crate::idx::IdxEntry;
 use crate::ifo::Ifo;
@@ -36,8 +36,8 @@ impl<'a> Dict {
 		Ok(Dict { inner })
 	}
 
-	pub fn get_definitions(&mut self, idx: &IdxEntry, ifo: &Ifo) -> Option<Vec<WordDefinition>> {
-		let mut vec = vec![];
+	pub fn get_definition(&mut self, idx: &IdxEntry, ifo: &Ifo) -> Option<WordDefinition> {
+		let mut segments = vec![];
 		for block in &idx.blocks {
 			let offset = block.offset;
 			let size = block.size;
@@ -59,18 +59,20 @@ impl<'a> Dict {
 			};
 
 			if let Some((types, text)) = result {
-				vec.push(WordDefinition {
-					word: idx.word.clone(),
+				segments.push(WordDefinitionSegment {
 					types,
 					text,
 				});
 			}
 		}
 
-		if vec.len() == 0 {
+		if segments.len() == 0 {
 			None
 		} else {
-			Some(vec)
+			Some(WordDefinition {
+				word: idx.word.clone(),
+				segments,
+			})
 		}
 	}
 }

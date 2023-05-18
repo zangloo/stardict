@@ -11,10 +11,14 @@ pub struct StarDict {
 	dict: Dict,
 }
 
-pub struct WordDefinition {
-	pub word: String,
+pub struct WordDefinitionSegment {
 	pub types: String,
 	pub text: String,
+}
+
+pub struct WordDefinition {
+	pub word: String,
+	pub segments: Vec<WordDefinitionSegment>,
 }
 
 impl StarDict {
@@ -75,8 +79,8 @@ impl StarDict {
 		let blocks = self.idx.lookup_blocks(word)?;
 		let mut definitions = vec![];
 		for block in blocks {
-			if let Some(mut result) = self.dict.get_definitions(block, &self.ifo) {
-				definitions.append(&mut result);
+			if let Some(result) = self.dict.get_definition(block, &self.ifo) {
+				definitions.push(result);
 			}
 		}
 		Some(definitions)

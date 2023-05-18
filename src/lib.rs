@@ -7,6 +7,7 @@ mod dictzip;
 
 pub use crate::stardict::StarDict;
 pub use crate::stardict::WordDefinition;
+pub use crate::stardict::WordDefinitionSegment;
 
 #[inline]
 fn buf_to_string(buf: &[u8]) -> String {
