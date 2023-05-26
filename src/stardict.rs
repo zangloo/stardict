@@ -1,11 +1,17 @@
+use crate::dict::Dict;
 use crate::error::{Error, Result};
 use crate::idx::Idx;
 use crate::ifo::Ifo;
-use crate::dict::Dict;
 
+use std::collections::HashMap;
+use std::fs::OpenOptions;
+use std::io::Read;
 use std::path::PathBuf;
 
 pub struct StarDict {
+	path: PathBuf,
+	resource_cache: HashMap<String, Vec<u8>>,
+
 	pub ifo: Ifo,
 	idx: Idx,
 	dict: Dict,
@@ -22,9 +28,12 @@ pub struct WordDefinition {
 }
 
 impl StarDict {
-	pub fn new(path: &PathBuf) -> Result<StarDict> {
-		fn get_sub_file(prefix: &str, name: &'static str, compress_suffix: &'static str)
-			-> Result<(PathBuf, bool)> {
+	pub fn new(path: impl Into<PathBuf>) -> Result<StarDict> {
+		fn get_sub_file(
+			prefix: &str,
+			name: &'static str,
+			compress_suffix: &'static str,
+		) -> Result<(PathBuf, bool)> {
 			let mut path_str = format!("{}.{}", prefix, name);
 			let mut path = PathBuf::from(&path_str);
 			if path.exists() {
@@ -42,6 +51,7 @@ impl StarDict {
 		}
 
 		let mut ifo = None;
+		let path = path.into();
 		for p in path.read_dir().map_err(|e| Error::FailedOpenIfo(e))? {
 			let path = p.map_err(|e| Error::FailedOpenIfo(e))?.path();
 			if let Some(extension) = path.extension() {
@@ -69,7 +79,13 @@ impl StarDict {
 			let idx = Idx::new(idx, &ifo, idx_gz, syn)?;
 			let dict = Dict::new(dict, dict_bz)?;
 
-			Ok(StarDict { ifo, idx, dict })
+			Ok(StarDict {
+				path,
+				resource_cache: HashMap::new(),
+				ifo,
+				idx,
+				dict,
+			})
 		} else {
 			Err(Error::NoFileFound("ifo"))
 		}
@@ -84,6 +100,36 @@ impl StarDict {
 			}
 		}
 		Some(definitions)
+	}
+
+	pub fn get_resource(&mut self, href: &str) -> Option<&Vec<u8>> {
+		let data = self.resource_cache.entry(href.to_owned()).or_insert_with(|| {
+			let mut path_str = href;
+			if let Some(ch) = path_str.chars().nth(0) {
+				if ch == '/' {
+					path_str = &path_str[1..];
+				}
+
+				let mut path = self.path.join("res");
+				for sub in path_str.split("/") {
+					path = path.join(sub);
+				}
+				if path.exists() {
+					if let Ok(mut file) = OpenOptions::new().read(true).open(path) {
+						let mut buf = vec![];
+						if file.read_to_end(&mut buf).is_ok() {
+							return buf;
+						}
+					}
+				}
+			}
+			vec![]
+		});
+		if data.len() == 0 {
+			None
+		} else {
+			Some(data)
+		}
 	}
 
 	pub fn dict_name(&self) -> &str {
