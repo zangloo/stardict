@@ -3,14 +3,12 @@ use crate::error::{Error, Result};
 use crate::idx::Idx;
 use crate::ifo::Ifo;
 
-use std::collections::HashMap;
 use std::fs::OpenOptions;
 use std::io::Read;
 use std::path::PathBuf;
 
 pub struct StarDict {
 	path: PathBuf,
-	resource_cache: HashMap<String, Vec<u8>>,
 
 	pub ifo: Ifo,
 	idx: Idx,
@@ -81,7 +79,6 @@ impl StarDict {
 
 			Ok(StarDict {
 				path,
-				resource_cache: HashMap::new(),
 				ifo,
 				idx,
 				dict,
@@ -102,14 +99,13 @@ impl StarDict {
 		Some(definitions)
 	}
 
-	pub fn get_resource(&mut self, href: &str) -> Option<&Vec<u8>> {
-		let data = self.resource_cache.entry(href.to_owned()).or_insert_with(|| {
-			let mut path_str = href;
-			if let Some(ch) = path_str.chars().nth(0) {
-				if ch == '/' {
-					path_str = &path_str[1..];
-				}
-
+	pub fn get_resource(&self, href: &str) -> Option<Vec<u8>> {
+		let mut path_str = href;
+		if let Some(ch) = path_str.chars().nth(0) {
+			if ch == '/' {
+				path_str = &path_str[1..];
+			}
+			if path_str.len() > 0 {
 				let mut path = self.path.join("res");
 				for sub in path_str.split("/") {
 					path = path.join(sub);
@@ -118,18 +114,13 @@ impl StarDict {
 					if let Ok(mut file) = OpenOptions::new().read(true).open(path) {
 						let mut buf = vec![];
 						if file.read_to_end(&mut buf).is_ok() {
-							return buf;
+							return Some(buf);
 						}
 					}
 				}
 			}
-			vec![]
-		});
-		if data.len() == 0 {
-			None
-		} else {
-			Some(data)
 		}
+		None
 	}
 
 	pub fn dict_name(&self) -> &str {
