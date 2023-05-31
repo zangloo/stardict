@@ -3,11 +3,10 @@ use std::io::{BufReader, Read, Seek, SeekFrom};
 use crate::error::{Error, Result};
 
 use std::path::PathBuf;
-use crate::{buf_to_string, WordDefinitionSegment};
+use crate::{buf_to_string, WordDefinition, WordDefinitionSegment};
 use crate::dictzip::DictZip;
 use crate::idx::IdxEntry;
 use crate::ifo::Ifo;
-use crate::stardict::WordDefinition;
 
 enum DictInner {
 	Plain(BufReader<File>, usize),
@@ -36,7 +35,7 @@ impl<'a> Dict {
 		Ok(Dict { inner })
 	}
 
-	pub fn get_definition(&mut self, idx: &IdxEntry, ifo: &Ifo) -> Option<WordDefinition> {
+	pub fn get_definition(&mut self, idx: &IdxEntry, ifo: &Ifo) -> Result<Option<WordDefinition>> {
 		let mut segments = vec![];
 		for block in &idx.blocks {
 			let offset = block.offset;
@@ -44,15 +43,16 @@ impl<'a> Dict {
 			let result = match &mut self.inner {
 				DictInner::Plain(reader, file_size) =>
 					if offset + size <= *file_size {
-						reader.seek(SeekFrom::Start(offset as u64)).ok()?;
+						reader.seek(SeekFrom::Start(offset as u64))?;
 						let mut buf = vec![0; size];
-						reader.read_exact(&mut buf).ok()?;
+						reader.read_exact(&mut buf)?;
 						parse_data(&buf, &ifo.sametypesequence)
 					} else {
 						None
 					}
 				DictInner::DictZip(dz) => {
-					let (buf, offset) = dz.get_segment_data(offset, size)?;
+					let (buf, offset) = dz.get_segment_data(offset, size)
+						.ok_or_else(|| Error::InvalidDict)?;
 					let data = &buf[offset..offset + size];
 					parse_data(data, &ifo.sametypesequence)
 				}
@@ -66,14 +66,15 @@ impl<'a> Dict {
 			}
 		}
 
-		if segments.len() == 0 {
+		let definitions = if segments.len() == 0 {
 			None
 		} else {
 			Some(WordDefinition {
 				word: idx.word.clone(),
 				segments,
 			})
-		}
+		};
+		Ok(definitions)
 	}
 }
 

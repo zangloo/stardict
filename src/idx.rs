@@ -37,8 +37,8 @@ impl IdxEntry {
 
 #[derive(Debug)]
 pub struct Idx {
-	items: HashMap<String, IdxEntry>,
-	syn: Option<HashMap<String, HashSet<String>>>,
+	pub(super) items: HashMap<String, IdxEntry>,
+	pub(super) syn: Option<HashMap<String, HashSet<String>>>,
 }
 
 #[allow(unused)]
@@ -69,7 +69,7 @@ impl Idx {
 			found.insert(entry.word.clone());
 		}
 		if let Some(syn) = &self.syn {
-			if let Some(alias) = syn.get(word) {
+			if let Some(alias) = syn.get(&lowercase_word) {
 				for key in alias {
 					if let Some(entry) = self.items.get(key) {
 						if !found.contains(&entry.word) {

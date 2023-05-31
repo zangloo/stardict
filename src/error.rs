@@ -20,6 +20,9 @@ pub enum Error {
 	#[error("Invalid idx element: {0}")]
 	InvalidIdxElement(&'static str),
 
+	#[error("Invalid idx block: {0}")]
+	InvalidIdxBlock(String),
+
 	#[error("Invalid syn index for {0}")]
 	InvalidSynIndex(String),
 
@@ -35,6 +38,17 @@ pub enum Error {
 	#[error("Error when reading: {0}")]
 	FailedReadHeader(#[from] std::io::Error),
 
+	#[error("No {0} resource found")]
+	NoResourceFound(String),
+
+	#[error("Load resource {0} failed: {1}")]
+	FailedLoadResource(String, String),
+
+	#[error("Failed get user cache folder")]
+	NoCacheDir,
+
+	#[error("Failed open cache: {0}")]
+	FailedOpenCache(String),
 }
 
 pub type Result<T> = std::result::Result<T, Error>;
