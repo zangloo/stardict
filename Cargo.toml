@@ -1,6 +1,6 @@
 [package]
 name = "stardict"
-version = "0.1.8"
+version = "0.1.10"
 edition = "2021"
 description = "Rust implement stardict"
 authors = ["zang.loo"]
@@ -15,6 +15,12 @@ default = ["sqlite"]
 sqlite = []
 sled = []
 
+[target.'cfg(windows)'.dependencies]
+rusqlite = { version = "0.29", features = ["bundled"] }
+
+[target.'cfg(unix)'.dependencies]
+rusqlite = { version = "0.29" }
+
 [dependencies]
 thiserror = "1.0"
 flate2 = "1.0"
@@ -22,6 +28,5 @@ byteorder = "1.4"
 inflate = "0.4"
 sled = "0.34"
 dirs = "5.0"
-rusqlite = { version = "0.29" }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
