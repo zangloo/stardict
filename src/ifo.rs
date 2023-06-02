@@ -4,7 +4,7 @@ use std::fs::File;
 use std::io::{BufRead, BufReader};
 use std::path::PathBuf;
 
-#[derive(Debug)]
+#[derive(Clone,Debug)]
 pub enum Version {
 	V242,
 	V300,
@@ -22,7 +22,7 @@ pub enum Version {
 /// date=
 /// sametypesequence= // very important.
 /// dicttype=
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub struct Ifo {
 	pub version: Version,
 	pub bookname: String,

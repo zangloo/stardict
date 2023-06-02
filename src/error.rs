@@ -49,6 +49,12 @@ pub enum Error {
 
 	#[error("Failed open cache: {0}")]
 	FailedOpenCache(String),
+
+	#[error("Initiating dict cache")]
+	CacheInitiating,
+
+	#[error("Invalid dictionary cache: {0}, remove and build it again")]
+	InvalidDictCache(String),
 }
 
 pub type Result<T> = std::result::Result<T, Error>;

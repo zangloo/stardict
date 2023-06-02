@@ -1,6 +1,6 @@
 [package]
 name = "stardict"
-version = "0.1.10"
+version = "0.1.11"
 edition = "2021"
 description = "Rust implement stardict"
 authors = ["zang.loo"]
@@ -30,3 +30,4 @@ sled = "0.34"
 dirs = "5.0"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
+process_alive = "0.1"

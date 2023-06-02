@@ -182,6 +182,9 @@ fn create<C, T>(path: impl Into<PathBuf>, creator: C) -> Result<T>
 
 #[cfg(test)]
 mod tests {
+	use std::thread;
+	use std::time::Duration;
+	use crate::error::Error;
 	use crate::StarDict;
 	#[cfg(feature = "sled")]
 	use crate::with_sled;
@@ -233,7 +236,13 @@ mod tests {
 	#[cfg(feature = "sqlite")]
 	fn lookup_sqlite() {
 		let mut dict = with_sqlite(DICT, CACHE_NAME).unwrap();
-		let definitions = dict.lookup(WORD).unwrap().unwrap();
+		let definitions = loop {
+			match dict.lookup(WORD) {
+				Ok(definitions) => break definitions,
+				Err(Error::CacheInitiating) => thread::sleep(Duration::from_secs(1)),
+				Err(_) => assert!(false),
+			}
+		}.unwrap();
 		assert_eq!(definitions.len(), 1);
 		assert_eq!(definitions[0].word, WORD_DEFINITION);
 		assert_eq!(definitions[0].segments.len(), 1);
