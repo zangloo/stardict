@@ -5,6 +5,9 @@ pub enum Error {
 	#[error("Failed to open ifo file")]
 	FailedOpenIfo(std::io::Error),
 
+	#[error("Dict path is not invalid")]
+	InvalidDictPath,
+
 	#[error("No {0} file found")]
 	NoFileFound(&'static str),
 

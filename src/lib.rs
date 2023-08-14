@@ -85,7 +85,10 @@ fn get_cache_dir<'a>(path: &'a PathBuf, cache_name: &str,
 	idx_cache_suffix: &str, syn_cache_suffix: Option<&str>)
 	-> Result<(PathBuf, Option<PathBuf>)>
 {
-	let dict_name = path.file_name().unwrap().to_str().unwrap();
+	let dict_name = path.file_name()
+		.ok_or(Error::InvalidDictPath)?
+		.to_str()
+		.ok_or(Error::InvalidDictPath)?;
 	let cache_dir = cache_dir().ok_or_else(|| Error::NoCacheDir)?;
 	let cache_dir = cache_dir.join(cache_name);
 	if !cache_dir.exists() {
@@ -124,7 +127,7 @@ pub fn no_cache(path: impl Into<PathBuf>) -> Result<StarDictStd> {
 	create(path, StarDictStd::new)
 }
 
-fn create<C, T>(path: impl Into<PathBuf>, creator: C) -> Result<T>
+fn create<C, T>(ifo_path: impl Into<PathBuf>, creator: C) -> Result<T>
 	where C: FnOnce(PathBuf, Ifo, PathBuf, bool, Option<PathBuf>, PathBuf, bool) -> Result<T>
 {
 	fn get_sub_file(
@@ -148,36 +151,27 @@ fn create<C, T>(path: impl Into<PathBuf>, creator: C) -> Result<T>
 		}
 	}
 
-	let mut ifo = None;
-	let path = path.into();
-	for p in path.read_dir().map_err(|e| Error::FailedOpenIfo(e))? {
-		let path = p.map_err(|e| Error::FailedOpenIfo(e))?.path();
-		if let Some(extension) = path.extension() {
-			if extension.to_str().unwrap() == "ifo" {
-				ifo = Some(path);
-				break;
-			}
-		}
+	let ifo_path = ifo_path.into();
+	if !ifo_path.is_file() || ifo_path.extension().map_or(true, |ext| ext != "ifo") {
+		return Err(Error::InvalidDictPath);
 	}
 
-	if let Some(ifo) = ifo {
-		let ifo_path = ifo.to_str().unwrap();
-		let prefix = &ifo_path[0..ifo_path.len() - 4];
-		let (idx, idx_gz) = get_sub_file(prefix, "idx", "gz")?;
-		let (dict, dict_bz) = get_sub_file(prefix, "dict", "dz")?;
-		// optional syn file
-		let syn_path = PathBuf::from(&format!("{}.syn", prefix));
-		let syn = if syn_path.exists() {
-			Some(syn_path)
-		} else {
-			None
-		};
-
-		let ifo = Ifo::new(ifo)?;
-		creator(path, ifo, idx, idx_gz, syn, dict, dict_bz)
+	let dict_path = ifo_path.parent().ok_or(Error::InvalidDictPath)?;
+	let dict_path = PathBuf::from(dict_path);
+	let ifo_path_str = ifo_path.to_str().ok_or(Error::InvalidDictPath)?;
+	let dict_path_str = &ifo_path_str[0..ifo_path_str.len() - 4];
+	let (idx, idx_gz) = get_sub_file(dict_path_str, "idx", "gz")?;
+	let (dict, dict_bz) = get_sub_file(dict_path_str, "dict", "dz")?;
+	// optional syn file
+	let syn_path = PathBuf::from(&format!("{}.syn", dict_path_str));
+	let syn = if syn_path.exists() {
+		Some(syn_path)
 	} else {
-		Err(Error::NoFileFound("ifo"))
-	}
+		None
+	};
+
+	let ifo = Ifo::new(ifo_path)?;
+	creator(dict_path, ifo, idx, idx_gz, syn, dict, dict_bz)
 }
 
 #[cfg(test)]
@@ -193,7 +187,7 @@ mod tests {
 	use crate::no_cache;
 
 	const CACHE_NAME: &str = "test";
-	const DICT: &str = "/home/zl/.stardict/dic/stardict-chibigenc-2.4.2/";
+	const DICT: &str = "/home/zl/dicts/stardict-chibigenc-2.4.2/chibigenc.ifo";
 	const WORD: &str = "汉";
 	const WORD_DEFINITION: &str = "漢";
 
