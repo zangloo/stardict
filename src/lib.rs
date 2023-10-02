@@ -180,10 +180,6 @@ mod tests {
 	use std::time::Duration;
 	use crate::error::Error;
 	use crate::StarDict;
-	#[cfg(feature = "sled")]
-	use crate::with_sled;
-	#[cfg(feature = "sqlite")]
-	use crate::with_sqlite;
 	use crate::no_cache;
 
 	const CACHE_NAME: &str = "test";
@@ -204,6 +200,7 @@ mod tests {
 	#[test]
 	#[cfg(feature = "sled")]
 	fn lookup_sled() {
+		use crate::with_sled;
 		let mut dict = with_sled(DICT, CACHE_NAME).unwrap();
 		let definitions = dict.lookup(WORD).unwrap().unwrap();
 		assert_eq!(definitions.len(), 1);
@@ -229,6 +226,7 @@ mod tests {
 	#[test]
 	#[cfg(feature = "sqlite")]
 	fn lookup_sqlite() {
+		use crate::with_sqlite;
 		let mut dict = with_sqlite(DICT, CACHE_NAME).unwrap();
 		let definitions = loop {
 			match dict.lookup(WORD) {
