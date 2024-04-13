@@ -183,7 +183,7 @@ mod tests {
 	use crate::no_cache;
 
 	const CACHE_NAME: &str = "test";
-	const DICT: &str = "/home/zl/dicts/stardict-chibigenc-2.4.2/chibigenc.ifo";
+	const DICT: &str = "/home/zl/tmp/stardict-chibigenc-2.4.2/chibigenc.ifo";
 	const WORD: &str = "汉";
 	const WORD_DEFINITION: &str = "漢";
 
