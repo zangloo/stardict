@@ -1,6 +1,6 @@
 [package]
 name = "stardict"
-version = "0.1.13"
+version = "0.2.1"
 edition = "2021"
 description = "Rust implement stardict"
 authors = ["zang.loo"]
