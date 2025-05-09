@@ -37,8 +37,8 @@ impl IdxEntry {
 
 #[derive(Debug)]
 pub struct Idx {
-	pub(super) items: HashMap<String, IdxEntry>,
-	pub(super) syn: Option<HashMap<String, HashSet<String>>>,
+	pub items: HashMap<String, IdxEntry>,
+	pub syn: Option<HashMap<String, HashSet<String>>>,
 }
 
 #[allow(unused)]

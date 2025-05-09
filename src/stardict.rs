@@ -7,11 +7,10 @@ use std::path::PathBuf;
 use crate::{StarDict, WordDefinition};
 
 pub struct StarDictStd {
-	path: PathBuf,
-
+	pub path: PathBuf,
 	pub ifo: Ifo,
-	idx: Idx,
-	dict: Dict,
+	pub idx: Idx,
+	pub dict: Dict,
 }
 
 impl StarDictStd {

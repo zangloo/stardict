@@ -1,8 +1,8 @@
 pub mod error;
 mod stardict;
-mod idx;
-mod ifo;
-mod dict;
+pub mod idx;
+pub mod ifo;
+pub mod dict;
 mod dictzip;
 #[cfg(feature = "sled")]
 mod stardict_sled;
